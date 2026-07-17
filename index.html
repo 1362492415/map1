@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快递配送区域划分与查询系统</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script type="text/javascript">
+    window._AMapSecurityConfig = {
+      // TODO: 交付买家后，请买家在此处替换为自己申请的高德地图安全密钥 (Security Code)
+      securityJsCode: "1e1aeeac1acb73952b47a716409d400a", 
+    };
+  </script>
+  <!-- TODO: 交付买家后，请买家将下面 URL 中的 key=... 替换为自己申请的高德地图 Web端(JS API) Key -->
+  <script src="https://webapi.amap.com/maps?v=2.0&key=4ca4a5198c2a76f5eddf81f748429d32&plugin=AMap.MouseTool,AMap.Geocoder,AMap.GeometryUtil"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- 左侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>配送区域管理</h2>
+      </div>
+
+      <!-- 地址查询栏 -->
+      <div class="search-section section-box">
+        <h3>地址归属查询</h3>
+        <div class="search-box">
+          <input type="text" id="addressInput" placeholder="输入具体地址进行查询..." />
+          <button id="searchBtn" class="btn primary-btn">查询</button>
+        </div>
+        <div id="searchResult" class="search-result"></div>
+      </div>
+
+      <!-- 绘制工具栏 -->
+      <div class="draw-section section-box">
+        <h3>区域圈画管理</h3>
+        <div class="draw-controls">
+          <button id="startDrawBtn" class="btn primary-btn">开启绘制</button>
+          <button id="cancelDrawBtn" class="btn outline-btn hidden">取消绘制</button>
+        </div>
+        <p class="help-text">提示：在地图上点击多点绘制区域，双击闭合多边形。</p>
+      </div>
+
+      <!-- 已存区域列表 -->
+      <div class="list-section section-box">
+        <h3>已划分区域 (<span id="areaCount">0</span>)</h3>
+        <ul id="areaList" class="area-list">
+          <!-- 动态渲染列表项 -->
+        </ul>
+      </div>
+    </aside>
+
+    <!-- 右侧地图容器 -->
+    <main class="map-container" id="mapContainer"></main>
+
+    <!-- 录入区域信息弹窗 -->
+    <div id="infoModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h3>保存区域信息</h3>
+        <div class="form-group">
+          <label for="areaName">区域/负责人名称：</label>
+          <input type="text" id="areaName" placeholder="例如：龙湖区张三" />
+        </div>
+        <div class="form-group">
+          <label for="areaColor">标识颜色：</label>
+          <input type="color" id="areaColor" value="#3b82f6" />
+        </div>
+        <div class="modal-actions">
+          <button id="saveAreaBtn" class="btn primary-btn">保存</button>
+          <button id="closeModalBtn" class="btn outline-btn">放弃</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 引入 Bmob JS SDK -->
+  <script src="https://unpkg.com/hydrogen-js-sdk/dist/Bmob-2.2.4.min.js"></script>
+  <script src="./js/store.js"></script>
+  <script src="./js/map.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

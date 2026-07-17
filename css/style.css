@@ -1,0 +1,360 @@
+:root {
+  /* 工业风蓝灰色系主题变量 */
+  --primary-color: #3b82f6;      /* 强调蓝 */
+  --primary-hover: #2563eb;
+  --bg-color: #f1f5f9;           /* 整体背景 */
+  --sidebar-bg: #1e293b;         /* 侧边栏深灰 */
+  --panel-bg: #334155;           /* 面板次深灰 */
+  --text-main: #f8fafc;          /* 主文本色 */
+  --text-muted: #94a3b8;         /* 辅助文本色 */
+  --border-color: #475569;       /* 边框色 */
+  --danger-color: #ef4444;       /* 删除/警告色 */
+  --highlight-bg: rgba(59, 130, 246, 0.2); /* 高亮背景 */
+  
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+#app {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+}
+
+/* 侧边栏布局 */
+.sidebar {
+  width: 320px;
+  background-color: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--panel-bg);
+}
+
+.sidebar-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+/* 模块通用样式 */
+.section-box {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-box h3 {
+  font-size: 1rem;
+  margin-bottom: 15px;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+/* 按钮样式 */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.primary-btn {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.primary-btn:hover {
+  background-color: var(--primary-hover);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.outline-btn {
+  background-color: transparent;
+  border: 1px solid var(--text-muted);
+  color: var(--text-muted);
+}
+
+.outline-btn:hover {
+  background-color: rgba(255,255,255,0.05);
+  color: #fff;
+  border-color: #fff;
+}
+
+.area-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.edit-btn, .danger-btn {
+  background-color: transparent;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.edit-btn {
+  color: var(--primary-color);
+}
+.edit-btn:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.danger-btn {
+  color: var(--danger-color);
+}
+.danger-btn:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 输入框样式 */
+input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: var(--sidebar-bg);
+  border: 1px solid var(--border-color);
+  color: #fff;
+  border-radius: 6px;
+  outline: none;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+  border-color: var(--primary-color);
+}
+
+/* 搜索区 */
+.search-box {
+  display: flex;
+  gap: 10px;
+}
+
+.search-result {
+  margin-top: 15px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  min-height: 20px;
+}
+.search-result.success {
+  color: #4ade80; /* 绿色 */
+}
+.search-result.error {
+  color: var(--danger-color);
+}
+
+/* 绘制区 */
+.draw-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* 列表区 */
+.list-section {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.area-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.area-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--panel-bg);
+  border-radius: 8px;
+  border-left: 4px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.area-item:hover {
+  background-color: #3f4f66;
+}
+
+.area-item.active {
+  background-color: var(--highlight-bg);
+  border-left-color: var(--primary-color);
+}
+
+.area-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.area-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* 右侧地图区 */
+.map-container {
+  flex: 1;
+  background-color: #e2e8f0;
+  position: relative;
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  background-color: var(--sidebar-bg);
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  border: 1px solid var(--border-color);
+}
+
+.modal-content h3 {
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.form-group input[type="color"] {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: var(--sidebar-bg);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* --- 移动端响应式适配 --- */
+@media screen and (max-width: 768px) {
+  #app {
+    flex-direction: column-reverse; /* 手机端：地图在上，控制面板在下 */
+  }
+
+  .sidebar {
+    width: 100%;
+    height: 50vh;
+    height: 50dvh; /* 面板占屏幕一半 */
+    border-right: none;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .map-container {
+    width: 100%;
+    height: 50vh;
+    height: 50dvh; /* 地图占屏幕一半 */
+    flex: none;
+  }
+
+  .sidebar-header {
+    padding: 10px 15px;
+  }
+  
+  .sidebar-header h2 {
+    font-size: 1.1rem;
+  }
+
+  .section-box {
+    padding: 10px 15px;
+  }
+  
+  .section-box h3 {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+  }
+
+  .draw-controls {
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+  }
+
+  .btn {
+    flex: 1; /* 按钮在手机端撑满 */
+    text-align: center;
+    padding: 6px 12px;
+  }
+  
+  .list-section {
+    padding-bottom: 40px; /* 增加底部留白，防止被系统手势条遮挡 */
+  }
+}
