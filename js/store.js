@@ -24,7 +24,7 @@ const Store = {
         createdat: new Date(item.createdAt).getTime() // Bmob 自动生成的 createdAt 是日期字符串
       }));
     } catch (e) {
-      console.error('获取区域数据失败:', e);
+      console.error('获取区域数据失败:', JSON.stringify(e));
       return [];
     }
   },
@@ -51,7 +51,7 @@ const Store = {
         createdat: new Date(res.createdAt).getTime()
       };
     } catch (e) {
-      console.error('保存区域数据失败:', e);
+      console.error('保存区域数据失败:', JSON.stringify(e));
       throw e;
     }
   },
