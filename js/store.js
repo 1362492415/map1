@@ -4,7 +4,7 @@
  */
 
 // 初始化 Bmob
-Bmob.initialize("59ace789cc8c71536a050994beb12e0f", "d31f654ff30cf57f2d2b51ca4f87d8d2");
+Bmob.initialize("ba4204dffe52b0e7", "1234567890123456");
 
 const Store = {
   /**
