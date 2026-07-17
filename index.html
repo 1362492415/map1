@@ -20,6 +20,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>配送区域管理</h2>
+        <button id="logoutBtn" class="btn outline-btn hidden">退出登录</button>
       </div>
 
       <!-- 地址查询栏 -->
@@ -71,6 +72,24 @@
           <button id="saveAreaBtn" class="btn primary-btn">保存</button>
           <button id="closeModalBtn" class="btn outline-btn">放弃</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全屏登录弹窗 -->
+  <div id="loginModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>快递配送区域系统登录</h3>
+      <div class="form-group">
+        <label for="username">账号:</label>
+        <input type="text" id="username" placeholder="请输入账号" />
+      </div>
+      <div class="form-group">
+        <label for="password">密码:</label>
+        <input type="password" id="password" placeholder="请输入密码" />
+      </div>
+      <div class="modal-actions">
+        <button id="loginBtn" class="btn primary-btn">登录</button>
       </div>
     </div>
   </div>

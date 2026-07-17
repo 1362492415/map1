@@ -11,6 +11,14 @@ class App {
 
     // DOM 元素引用
     this.els = {
+      // 登录相关
+      loginModal: document.getElementById('loginModal'),
+      loginBtn: document.getElementById('loginBtn'),
+      logoutBtn: document.getElementById('logoutBtn'),
+      username: document.getElementById('username'),
+      password: document.getElementById('password'),
+
+      // 功能相关
       startDrawBtn: document.getElementById('startDrawBtn'),
       finishDrawBtn: document.getElementById('finishDrawBtn'),
       cancelDrawBtn: document.getElementById('cancelDrawBtn'),
@@ -30,6 +38,25 @@ class App {
   }
 
   init() {
+    this.bindAuthEvents();
+    this.checkLogin();
+  }
+
+  checkLogin() {
+    const user = window.Store.getCurrentUser();
+    if (user) {
+      // 已登录
+      this.els.loginModal.classList.add('hidden');
+      this.els.logoutBtn.classList.remove('hidden');
+      this.startApp();
+    } else {
+      // 未登录
+      this.els.loginModal.classList.remove('hidden');
+      this.els.logoutBtn.classList.add('hidden');
+    }
+  }
+  
+  startApp() {
     // 确保高德地图脚本加载完成后再初始化
     if (window.AMap) {
       this.mapManager = new MapManager('mapContainer');
@@ -37,10 +64,49 @@ class App {
       this.bindEvents();
     } else {
       console.error('AMap is not loaded');
-      setTimeout(() => this.init(), 500);
+      setTimeout(() => this.startApp(), 500);
     }
   }
 
+  bindAuthEvents() {
+    this.els.loginBtn.addEventListener('click', () => this.handleLogin());
+    this.els.logoutBtn.addEventListener('click', () => this.handleLogout());
+    this.els.passwordInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.handleLogin();
+    });
+  }
+
+  async handleLogin() {
+    const username = this.els.usernameInput.value.trim();
+    const password = this.els.passwordInput.value.trim();
+
+    if (!username || !password) {
+      alert('请输入账号和密码');
+      return;
+    }
+
+    const originalText = this.els.loginBtn.textContent;
+    this.els.loginBtn.textContent = '登录中...';
+    this.els.loginBtn.disabled = true;
+
+    try {
+      await window.Store.login(username, password);
+      this.checkLogin(); // 登录成功后，重新检查登录状态并启动应用
+    } catch (e) {
+      alert('账号或密码错误');
+    } finally {
+      this.els.loginBtn.textContent = originalText;
+      this.els.loginBtn.disabled = false;
+    }
+  }
+
+  async handleLogout() {
+    if (confirm('确定要退出登录吗？')) {
+      await window.Store.logout();
+      window.location.reload(); // 刷新页面回到登录状态
+    }
+  }
+  
   async loadAreas() {
     this.areas = await window.Store.fetchAreas();
     this.renderList();
@@ -48,6 +114,13 @@ class App {
   }
 
   bindEvents() {
+    // 登录/退出
+    this.els.loginBtn.addEventListener('click', () => this.handleLogin());
+    this.els.logoutBtn.addEventListener('click', () => this.handleLogout());
+    this.els.password.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') this.handleLogin();
+    });
+
     // 绘制相关
     this.els.startDrawBtn.addEventListener('click', () => this.handleStartDraw());
     this.els.finishDrawBtn.addEventListener('click', () => this.handleFinishDraw());
@@ -126,15 +199,17 @@ class App {
     try {
       if (this.editingAreaId) {
         // 编辑模式
-        const updatedArea = await window.Store.updateArea(this.editingAreaId, { name, color });
-        if (updatedArea) {
-          const index = this.areas.findIndex(a => a.id === this.editingAreaId);
-          if (index !== -1) this.areas[index] = updatedArea;
-          this.mapManager.renderAreas(this.areas);
-          this.renderList();
-          this.closeModal();
-          this.editingAreaId = null;
+        await window.Store.updateArea(this.editingAreaId, { name, color });
+        
+        // 更新本地状态
+        const index = this.areas.findIndex(a => a.id === this.editingAreaId);
+        if (index !== -1) {
+          this.areas[index] = { ...this.areas[index], name, color };
         }
+        this.mapManager.renderAreas(this.areas);
+        this.renderList();
+        this.closeModal();
+        this.editingAreaId = null;
       } else if (this.tempPath) {
         // 新增模式
         const newArea = await window.Store.saveArea({
@@ -150,6 +225,7 @@ class App {
       }
     } catch (e) {
       alert('保存失败，请检查网络后重试');
+      console.error(e);
     } finally {
       this.els.saveAreaBtn.textContent = originalText;
       this.els.saveAreaBtn.disabled = false;
@@ -239,6 +315,7 @@ class App {
         this.renderList();
       } catch(e) {
         alert('删除失败，请检查网络');
+        console.error(e);
       }
     }
   }
@@ -275,6 +352,7 @@ class App {
     } catch (err) {
       resEl.textContent = err.toString();
       resEl.className = 'search-result error';
+      console.error(err);
     }
   }
 }
