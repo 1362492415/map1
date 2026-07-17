@@ -12,6 +12,7 @@ class App {
     // DOM 元素引用
     this.els = {
       startDrawBtn: document.getElementById('startDrawBtn'),
+      finishDrawBtn: document.getElementById('finishDrawBtn'),
       cancelDrawBtn: document.getElementById('cancelDrawBtn'),
       areaList: document.getElementById('areaList'),
       areaCount: document.getElementById('areaCount'),
@@ -49,6 +50,7 @@ class App {
   bindEvents() {
     // 绘制相关
     this.els.startDrawBtn.addEventListener('click', () => this.handleStartDraw());
+    this.els.finishDrawBtn.addEventListener('click', () => this.handleFinishDraw());
     this.els.cancelDrawBtn.addEventListener('click', () => this.handleCancelDraw());
 
     // 弹窗相关
@@ -65,23 +67,35 @@ class App {
   // --- 绘制流程 ---
   handleStartDraw() {
     this.els.startDrawBtn.classList.add('hidden');
+    this.els.finishDrawBtn.classList.remove('hidden');
     this.els.cancelDrawBtn.classList.remove('hidden');
+    
+    // 提示用户：点击完成绘制按钮
+    document.querySelector('.help-text').textContent = '提示：在地图上点击多点绘制区域，完成后点击“完成绘制”按钮。';
     
     this.mapManager.startDraw((path) => {
       // 绘制完成回调
       this.tempPath = path;
       this.els.cancelDrawBtn.classList.add('hidden');
+      this.els.finishDrawBtn.classList.add('hidden');
       this.els.startDrawBtn.classList.remove('hidden');
+      document.querySelector('.help-text').textContent = '提示：在地图上点击多点绘制区域，完成后点击“完成绘制”按钮。'; // 恢复默认提示
       this.editingAreaId = null;
       document.querySelector('#infoModal h3').textContent = '保存区域信息';
       this.openModal();
     });
   }
 
+  handleFinishDraw() {
+    this.mapManager.finishDraw();
+  }
+
   handleCancelDraw() {
     this.mapManager.cancelDraw();
     this.els.cancelDrawBtn.classList.add('hidden');
+    this.els.finishDrawBtn.classList.add('hidden');
     this.els.startDrawBtn.classList.remove('hidden');
+    document.querySelector('.help-text').textContent = '提示：在地图上点击多点绘制区域，完成后点击“完成绘制”按钮。'; // 恢复默认提示
   }
 
   // --- 弹窗逻辑 ---

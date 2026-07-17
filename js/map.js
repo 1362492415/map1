@@ -10,6 +10,13 @@ class MapManager {
     this.polygons = new Map(); // 存储已绘制的多边形实例 (id -> polygon)
     this.marker = null; // 用于搜索结果的高亮打点
 
+    // 新增：手动绘制相关状态
+    this.isDrawing = false;
+    this.currentPath = [];
+    this.tempPolyline = null;
+    this.drawEndCallback = null;
+    this.mapClickHandler = null;
+
     this.initMap(containerId);
   }
 
@@ -42,38 +49,74 @@ class MapManager {
    * @param {Function} onDrawEnd 绘制完成回调，接收 path 数组
    */
   startDraw(onDrawEnd) {
-    if (!this.mouseTool) return;
-    
-    // 配置绘制多边形的样式
-    this.mouseTool.polygon({
-      fillColor: '#3b82f6',
-      fillOpacity: 0.3,
+    if (this.isDrawing) return;
+
+    this.isDrawing = true;
+    this.currentPath = [];
+    this.drawEndCallback = onDrawEnd; // 保存回调函数
+
+    // 更改地图光标样式
+    this.map.getContainer().style.cursor = 'crosshair';
+
+    // 创建临时折线
+    this.tempPolyline = new AMap.Polyline({
+      map: this.map,
       strokeColor: '#2563eb',
       strokeWeight: 2,
+      strokeStyle: 'dashed',
     });
 
-    // 绑定绘制完成事件
-    this.mouseTool.on('draw', (e) => {
-      const polygon = e.obj;
-      const path = polygon.getPath().map(p => [p.lng, p.lat]);
-      
-      // 触发回调
-      if (typeof onDrawEnd === 'function') {
-        onDrawEnd(path);
-      }
-      
-      // 关闭绘制并清除临时多边形（由外部决定是否真正渲染保存后的多边形）
-      this.mouseTool.close(true); 
-    });
+    // 绑定地图点击事件
+    this.mapClickHandler = (e) => {
+      this.currentPath.push(e.lnglat);
+      this.tempPolyline.setPath(this.currentPath);
+    };
+    this.map.on('click', this.mapClickHandler);
+  }
+
+  /**
+   * 完成绘制
+   */
+  finishDraw() {
+    if (!this.isDrawing) return;
+
+    this.isDrawing = false;
+    this.map.getContainer().style.cursor = 'default';
+    this.map.off('click', this.mapClickHandler); // 移除点击事件监听
+
+    // 移除临时折线
+    if (this.tempPolyline) {
+      this.tempPolyline.setMap(null);
+      this.tempPolyline = null;
+    }
+
+    // 触发回调，传递路径
+    if (typeof this.drawEndCallback === 'function' && this.currentPath.length >= 3) {
+      const path = this.currentPath.map(p => [p.lng, p.lat]);
+      this.drawEndCallback(path);
+    }
+
+    this.currentPath = [];
+    this.drawEndCallback = null;
   }
 
   /**
    * 取消绘制
    */
   cancelDraw() {
-    if (this.mouseTool) {
-      this.mouseTool.close(true); // true 表示清除正在绘制的图形
+    if (!this.isDrawing) return;
+
+    this.isDrawing = false;
+    this.map.getContainer().style.cursor = 'default';
+    this.map.off('click', this.mapClickHandler);
+
+    if (this.tempPolyline) {
+      this.tempPolyline.setMap(null);
+      this.tempPolyline = null;
     }
+
+    this.currentPath = [];
+    this.drawEndCallback = null;
   }
 
   /**
