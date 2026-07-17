@@ -15,8 +15,8 @@ class App {
       loginModal: document.getElementById('loginModal'),
       loginBtn: document.getElementById('loginBtn'),
       logoutBtn: document.getElementById('logoutBtn'),
-      username: document.getElementById('username'),
-      password: document.getElementById('password'),
+      usernameInput: document.getElementById('username'),
+      passwordInput: document.getElementById('password'),
 
       // 功能相关
       startDrawBtn: document.getElementById('startDrawBtn'),
@@ -114,13 +114,6 @@ class App {
   }
 
   bindEvents() {
-    // 登录/退出
-    this.els.loginBtn.addEventListener('click', () => this.handleLogin());
-    this.els.logoutBtn.addEventListener('click', () => this.handleLogout());
-    this.els.password.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') this.handleLogin();
-    });
-
     // 绘制相关
     this.els.startDrawBtn.addEventListener('click', () => this.handleStartDraw());
     this.els.finishDrawBtn.addEventListener('click', () => this.handleFinishDraw());

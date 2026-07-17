@@ -29,11 +29,13 @@ async function createUsers() {
 
   for (const userData of usersToCreate) {
     try {
-      const user = new Bmob.User();
-      user.set('username', userData.username);
-      user.set('password', userData.password);
+      // 使用新版 SDK 的注册语法
+      let params = {
+        username: userData.username,
+        password: userData.password
+      };
       
-      await user.signUp();
+      await Bmob.User.register(params);
       
       results.push({ 
         username: userData.username, 
