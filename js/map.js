@@ -16,6 +16,9 @@ class MapManager {
     this.tempPolyline = null;
     this.drawEndCallback = null;
     this.mapClickHandler = null;
+    this.mapMouseMoveHandler = null; // 新增：鼠标移动事件
+    this.snapMarker = null; // 新增：吸附提示点
+    this.currentSnapPoint = null; // 新增：当前吸附的经纬度
 
     this.initMap(containerId);
   }
@@ -42,6 +45,20 @@ class MapManager {
       map: this.map,
       visible: false
     });
+
+    // 初始化吸附提示点
+    this.snapMarker = new AMap.CircleMarker({
+      map: this.map,
+      center: [0, 0],
+      radius: 6,
+      fillColor: '#ef4444',
+      fillOpacity: 0.8,
+      strokeColor: '#ffffff',
+      strokeWeight: 2,
+      visible: false,
+      zIndex: 999,
+      bubble: true // 新增：允许事件冒泡到地图，防止红点阻挡点击事件
+    });
   }
 
   /**
@@ -54,6 +71,7 @@ class MapManager {
     this.isDrawing = true;
     this.currentPath = [];
     this.drawEndCallback = onDrawEnd; // 保存回调函数
+    this.currentSnapPoint = null;
 
     // 更改地图光标样式
     this.map.getContainer().style.cursor = 'crosshair';
@@ -66,11 +84,59 @@ class MapManager {
       strokeStyle: 'dashed',
     });
 
+    // 收集所有已有区域的顶点，用于吸附计算
+    const allVertices = [];
+    this.polygons.forEach(polygon => {
+      const path = polygon.getPath();
+      path.forEach(p => {
+        allVertices.push(p);
+      });
+    });
+
+    // 绑定鼠标移动事件，实现吸附逻辑
+    this.mapMouseMoveHandler = (e) => {
+      if (!this.isDrawing) return;
+      
+      const mouseLngLat = e.lnglat;
+      const mousePixel = this.map.lngLatToContainer(mouseLngLat);
+      let snapped = false;
+      const snapThreshold = 7; // 吸附阈值（像素），适配手机端防误触
+
+      for (let i = 0; i < allVertices.length; i++) {
+        const vertex = allVertices[i];
+        const vertexPixel = this.map.lngLatToContainer(vertex);
+        
+        // 计算屏幕像素距离
+        const distance = Math.sqrt(
+          Math.pow(mousePixel.x - vertexPixel.x, 2) + 
+          Math.pow(mousePixel.y - vertexPixel.y, 2)
+        );
+
+        if (distance < snapThreshold) {
+          // 触发吸附
+          this.currentSnapPoint = vertex;
+          this.snapMarker.setCenter(vertex);
+          this.snapMarker.show();
+          snapped = true;
+          break; // 找到一个吸附点就跳出
+        }
+      }
+
+      if (!snapped) {
+        this.currentSnapPoint = null;
+        this.snapMarker.hide();
+      }
+    };
+
     // 绑定地图点击事件
     this.mapClickHandler = (e) => {
-      this.currentPath.push(e.lnglat);
+      // 如果当前有吸附点，则使用吸附点，否则使用鼠标实际点击点
+      const pointToAdd = this.currentSnapPoint ? this.currentSnapPoint : e.lnglat;
+      this.currentPath.push(pointToAdd);
       this.tempPolyline.setPath(this.currentPath);
     };
+
+    this.map.on('mousemove', this.mapMouseMoveHandler);
     this.map.on('click', this.mapClickHandler);
   }
 
@@ -83,6 +149,8 @@ class MapManager {
     this.isDrawing = false;
     this.map.getContainer().style.cursor = 'default';
     this.map.off('click', this.mapClickHandler); // 移除点击事件监听
+    this.map.off('mousemove', this.mapMouseMoveHandler); // 移除鼠标移动监听
+    this.snapMarker.hide();
 
     // 移除临时折线
     if (this.tempPolyline) {
@@ -90,10 +158,76 @@ class MapManager {
       this.tempPolyline = null;
     }
 
-    // 触发回调，传递路径
+    // 触发回调，传递路径并进行裁剪处理
     if (typeof this.drawEndCallback === 'function' && this.currentPath.length >= 3) {
-      const path = this.currentPath.map(p => [p.lng, p.lat]);
-      this.drawEndCallback(path);
+      let path = this.currentPath.map(p => [p.lng, p.lat]);
+      
+      // 确保多边形闭合 (首尾点相同)
+      if (path[0][0] !== path[path.length - 1][0] || path[0][1] !== path[path.length - 1][1]) {
+        path.push([...path[0]]);
+      }
+
+      try {
+        // 构建新绘制区域的 Turf 多边形对象
+        let newPolygon = turf.polygon([path]);
+
+        // 遍历所有已有区域，依次进行“减法”（裁剪重叠部分）
+        this.polygons.forEach(polygon => {
+          const existingPath = polygon.getPath().map(p => [p.lng, p.lat]);
+          if (existingPath.length < 3) return;
+          
+          // 确保已有区域闭合
+          if (existingPath[0][0] !== existingPath[existingPath.length - 1][0] || existingPath[0][1] !== existingPath[existingPath.length - 1][1]) {
+            existingPath.push([...existingPath[0]]);
+          }
+          
+          const existingTurfPolygon = turf.polygon([existingPath]);
+          
+          // 执行差集计算：newPolygon - existingTurfPolygon
+          const diff = turf.difference(newPolygon, existingTurfPolygon);
+          
+          if (diff) {
+            // 如果裁剪后是一个完整的多边形 (Polygon)
+            if (diff.geometry.type === 'Polygon') {
+              newPolygon = diff;
+            } 
+            // 如果裁剪后被分成了多个碎块 (MultiPolygon)，我们取面积最大的那一块
+            else if (diff.geometry.type === 'MultiPolygon') {
+              let maxArea = 0;
+              let maxPoly = null;
+              diff.geometry.coordinates.forEach(coords => {
+                const poly = turf.polygon(coords);
+                const area = turf.area(poly);
+                if (area > maxArea) {
+                  maxArea = area;
+                  maxPoly = poly;
+                }
+              });
+              if (maxPoly) newPolygon = maxPoly;
+            }
+          } else {
+            // diff 为 null 说明新区域完全被老区域包围/覆盖了，直接被剪没了
+            console.warn("新绘制的区域完全被现有区域覆盖");
+            newPolygon = null;
+          }
+        });
+
+        if (newPolygon) {
+          // 将 Turf 多边形坐标转回高德需要的格式 (去掉自动补全的尾点，高德API不需要首尾相同)
+          let finalPath = newPolygon.geometry.coordinates[0];
+          finalPath.pop(); // 移除首尾重复点
+          this.drawEndCallback(finalPath);
+        } else {
+          alert("绘制失败：您绘制的区域已完全存在于其他区域中！");
+          this.drawEndCallback(null); // 传递 null 表示失败
+        }
+
+      } catch (err) {
+        console.error("重叠裁剪计算失败:", err);
+        // 如果裁剪失败（可能因为画了自相交的复杂多边形），降级返回原始路径
+        path.pop(); // 移除为了 Turf 补上的尾点
+        this.drawEndCallback(path);
+      }
     }
 
     this.currentPath = [];
@@ -109,6 +243,8 @@ class MapManager {
     this.isDrawing = false;
     this.map.getContainer().style.cursor = 'default';
     this.map.off('click', this.mapClickHandler);
+    this.map.off('mousemove', this.mapMouseMoveHandler);
+    this.snapMarker.hide();
 
     if (this.tempPolyline) {
       this.tempPolyline.setMap(null);

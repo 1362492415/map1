@@ -137,9 +137,15 @@ class App {
     this.els.cancelDrawBtn.classList.remove('hidden');
     
     // 提示用户：点击完成绘制按钮
-    document.querySelector('.help-text').textContent = '提示：在地图上点击多点绘制区域，完成后点击“完成绘制”按钮。';
+    document.querySelector('.help-text').textContent = '提示：您可以粗略绘制，系统会自动裁剪与相邻区域重叠的部分，实现完美贴边。';
     
     this.mapManager.startDraw((path) => {
+      if (!path) {
+        // 如果路径为 null，说明裁剪后区域消失了（完全被覆盖）
+        this.handleCancelDraw();
+        return;
+      }
+
       // 绘制完成回调
       this.tempPath = path;
       this.els.cancelDrawBtn.classList.add('hidden');
