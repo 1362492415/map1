@@ -93,39 +93,14 @@ class MapManager {
       });
     });
 
-    // 绑定鼠标移动事件，实现吸附逻辑
+    // 绑定鼠标移动事件（PC端），实现吸附逻辑
     this.mapMouseMoveHandler = (e) => {
-      if (!this.isDrawing) return;
-      
-      const mouseLngLat = e.lnglat;
-      const mousePixel = this.map.lngLatToContainer(mouseLngLat);
-      let snapped = false;
-      const snapThreshold = 7; // 吸附阈值（像素），适配手机端防误触
+      this.handleSnap(e.lnglat, allVertices);
+    };
 
-      for (let i = 0; i < allVertices.length; i++) {
-        const vertex = allVertices[i];
-        const vertexPixel = this.map.lngLatToContainer(vertex);
-        
-        // 计算屏幕像素距离
-        const distance = Math.sqrt(
-          Math.pow(mousePixel.x - vertexPixel.x, 2) + 
-          Math.pow(mousePixel.y - vertexPixel.y, 2)
-        );
-
-        if (distance < snapThreshold) {
-          // 触发吸附
-          this.currentSnapPoint = vertex;
-          this.snapMarker.setCenter(vertex);
-          this.snapMarker.show();
-          snapped = true;
-          break; // 找到一个吸附点就跳出
-        }
-      }
-
-      if (!snapped) {
-        this.currentSnapPoint = null;
-        this.snapMarker.hide();
-      }
+    // 绑定触摸移动事件（手机端），实现吸附逻辑
+    this.mapTouchMoveHandler = (e) => {
+      this.handleSnap(e.lnglat, allVertices);
     };
 
     // 绑定地图点击事件
@@ -137,7 +112,44 @@ class MapManager {
     };
 
     this.map.on('mousemove', this.mapMouseMoveHandler);
+    this.map.on('touchmove', this.mapTouchMoveHandler);
     this.map.on('click', this.mapClickHandler);
+  }
+
+  /**
+   * 处理吸附逻辑
+   */
+  handleSnap(lnglat, allVertices) {
+    if (!this.isDrawing) return;
+    
+    const mousePixel = this.map.lngLatToContainer(lnglat);
+    let snapped = false;
+    const snapThreshold = 15; // 吸附阈值适当调大，方便手机端吸附
+
+    for (let i = 0; i < allVertices.length; i++) {
+      const vertex = allVertices[i];
+      const vertexPixel = this.map.lngLatToContainer(vertex);
+      
+      // 计算屏幕像素距离
+      const distance = Math.sqrt(
+        Math.pow(mousePixel.x - vertexPixel.x, 2) + 
+        Math.pow(mousePixel.y - vertexPixel.y, 2)
+      );
+
+      if (distance < snapThreshold) {
+        // 触发吸附
+        this.currentSnapPoint = vertex;
+        this.snapMarker.setCenter(vertex);
+        this.snapMarker.show();
+        snapped = true;
+        break; // 找到一个吸附点就跳出
+      }
+    }
+
+    if (!snapped) {
+      this.currentSnapPoint = null;
+      this.snapMarker.hide();
+    }
   }
 
   /**
@@ -150,6 +162,9 @@ class MapManager {
     this.map.getContainer().style.cursor = 'default';
     this.map.off('click', this.mapClickHandler); // 移除点击事件监听
     this.map.off('mousemove', this.mapMouseMoveHandler); // 移除鼠标移动监听
+    if (this.mapTouchMoveHandler) {
+      this.map.off('touchmove', this.mapTouchMoveHandler);
+    }
     this.snapMarker.hide();
 
     // 移除临时折线
@@ -244,6 +259,9 @@ class MapManager {
     this.map.getContainer().style.cursor = 'default';
     this.map.off('click', this.mapClickHandler);
     this.map.off('mousemove', this.mapMouseMoveHandler);
+    if (this.mapTouchMoveHandler) {
+      this.map.off('touchmove', this.mapTouchMoveHandler);
+    }
     this.snapMarker.hide();
 
     if (this.tempPolyline) {
