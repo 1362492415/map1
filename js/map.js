@@ -76,6 +76,11 @@ class MapManager {
     // 更改地图光标样式
     this.map.getContainer().style.cursor = 'crosshair';
 
+    // 禁用所有已有多边形的事件响应，防止重叠绘制时误触多边形
+    this.polygons.forEach(polygon => {
+      polygon.setOptions({ bubble: true }); // 让点击事件冒泡到地图
+    });
+
     // 创建临时折线
     this.tempPolyline = new AMap.Polyline({
       map: this.map,
@@ -166,6 +171,11 @@ class MapManager {
       this.map.off('touchmove', this.mapTouchMoveHandler);
     }
     this.snapMarker.hide();
+
+    // 恢复已有多边形的事件响应，使其能够再次被选中高亮
+    this.polygons.forEach(polygon => {
+      polygon.setOptions({ bubble: false }); 
+    });
 
     // 移除临时折线
     if (this.tempPolyline) {
@@ -263,6 +273,11 @@ class MapManager {
       this.map.off('touchmove', this.mapTouchMoveHandler);
     }
     this.snapMarker.hide();
+
+    // 恢复已有多边形的事件响应
+    this.polygons.forEach(polygon => {
+      polygon.setOptions({ bubble: false }); 
+    });
 
     if (this.tempPolyline) {
       this.tempPolyline.setMap(null);
